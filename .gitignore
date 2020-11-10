@@ -1,0 +1,9 @@
+/build/
+.idea
+.gradle
+.terraform
+*.iml
+*.ipr
+*.iws
+*.env
+!sample.env
