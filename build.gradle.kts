@@ -6,11 +6,9 @@ val tfEnv : String by project
 val tfBin = "terraform/terraform_0.13.5_linux_amd64"
 val tfSrc = "src/main/terraform/"
 
-fun sysEnv(name : String, defaultValue : String = "") : String {
-    val value = (System.getenv(name) ?: defaultValue)
-    if(value == "")
+fun sysEnv(name : String, defaultValue : String? = null) : String {
+    return System.getenv(name) ?: defaultValue ?:
         throw java.lang.IllegalArgumentException("Must supply an environment value for $name")
-    return value
 }
 val tfExecEnv = hashMapOf(
     "AWS_ACCESS_KEY_ID" to sysEnv("AWS_ACCESS_KEY_ID"),
