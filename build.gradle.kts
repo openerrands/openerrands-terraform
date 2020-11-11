@@ -16,7 +16,11 @@ val tfExecEnv = hashMapOf(
     sysEnv("AWS_ACCESS_KEY_ID"),
     sysEnv("AWS_SECRET_ACCESS_KEY"),
     sysEnv("AWS_DEFAULT_REGION","us-east-2"),
-    sysEnv("CLOUDFLARE_API_TOKEN")
+    sysEnv("CLOUDFLARE_API_TOKEN"),
+    "TF_VAR_auth_amazon_client_id" to (System.getenv("AUTH_AMAZON_CLIENT_ID") ?:
+            throw IllegalArgumentException("Must supply an environment value for AUTH_AMAZON_CLIENT_ID")),
+    "TF_VAR_auth_amazon_client_secret" to (System.getenv("AUTH_AMAZON_CLIENT_SECRET") ?:
+            throw IllegalArgumentException("Must supply an environment value for AUTH_AMAZON_CLIENT_SECRET"))
 )
 
 fun tfExecWithVars(name : String, cmd : String, vararg args : Pair<String, String?>): Exec {

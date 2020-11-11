@@ -20,6 +20,13 @@ variable "cloudflare_zone_id" {
   type = string
 }
 
+variable "auth_amazon_client_id" {
+  type = string
+}
+variable "auth_amazon_client_secret" {
+  type = string
+}
+
 variable "secret_output" {
   type = bool
   default = false

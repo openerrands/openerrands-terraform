@@ -47,6 +47,10 @@ output "api_gateway_endpoint" {
   value = trimprefix(aws_apigatewayv2_api.http_api.api_endpoint, "https://")
 }
 
+output "cloudfront_distribution_arn" {
+  value = aws_cognito_user_pool_domain.auth.cloudfront_distribution_arn
+}
+
 output "lambda_role_arn" {
   value = aws_iam_role.lambda.arn
 }
