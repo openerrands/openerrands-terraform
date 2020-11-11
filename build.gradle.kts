@@ -6,49 +6,49 @@ val tfEnv : String by project
 val tfBin = "terraform/terraform_0.13.5_linux_amd64"
 val tfSrc = "src/main/terraform/"
 
-fun sysEnv(name : String, defaultValue : String = "") : Pair<String, String> {
-    val value = System.getenv(name) ?: defaultValue
+fun sysEnv(name : String, defaultValue : String = "") : String {
+    val value = (System.getenv(name) ?: defaultValue)
     if(value == "")
         throw java.lang.IllegalArgumentException("Must supply an environment value for $name")
-    return (name to value)
+    return value
 }
 val tfExecEnv = hashMapOf(
-    sysEnv("AWS_ACCESS_KEY_ID"),
-    sysEnv("AWS_SECRET_ACCESS_KEY"),
-    sysEnv("AWS_DEFAULT_REGION","us-east-2"),
-    sysEnv("CLOUDFLARE_API_TOKEN"),
-    "TF_VAR_auth_amazon_client_id" to (System.getenv("AUTH_AMAZON_CLIENT_ID") ?:
-            throw IllegalArgumentException("Must supply an environment value for AUTH_AMAZON_CLIENT_ID")),
-    "TF_VAR_auth_amazon_client_secret" to (System.getenv("AUTH_AMAZON_CLIENT_SECRET") ?:
-            throw IllegalArgumentException("Must supply an environment value for AUTH_AMAZON_CLIENT_SECRET"))
+    "AWS_ACCESS_KEY_ID" to sysEnv("AWS_ACCESS_KEY_ID"),
+    "AWS_SECRET_ACCESS_KEY" to sysEnv("AWS_SECRET_ACCESS_KEY"),
+    "AWS_DEFAULT_REGION" to sysEnv("AWS_DEFAULT_REGION", "us-east-2"),
+    "CLOUDFLARE_API_TOKEN" to sysEnv("CLOUDFLARE_API_TOKEN"),
+    "TF_VAR_auth_amazon_client_id" to sysEnv("AUTH_AMAZON_CLIENT_ID"),
+    "TF_VAR_auth_amazon_client_secret" to sysEnv("AUTH_AMAZON_CLIENT_SECRET")
 )
 
-fun tfExecWithVars(name : String, cmd : String, vararg args : Pair<String, String?>): Exec {
-    val tfArgs = mutableListOf(
-        "-var-file=config/default.tfvars",
-        "-var-file=config/${tfEnv}.tfvars",
-        "-var=environment_prefix=${tfEnv}")
-    tfArgs.addAll(args.map { if(it.second == null) "-${it.first}" else "-${it.first}=${it.second}" })
-
+fun formatArgs(args : Array<out Pair<String, String?>>) : Array<String> {
+    return args.map {
+        when (it.second) {
+            "" -> it.first
+            null -> "-${it.first}"
+            else -> "-${it.first}=${it.second}"
+        }
+    }.toTypedArray()
+}
+fun tfExec(name : String, cmd : String, vararg args : Pair<String, String?>) : Exec {
     return task<Exec>(name) {
         environment(tfExecEnv)
-        commandLine(tfBin, cmd, *tfArgs.toTypedArray(), tfSrc)
+        commandLine(tfBin, cmd, *formatArgs(args), tfSrc)
     }
+}
+fun tfExecWithVars(name : String, cmd : String, vararg args : Pair<String, String?>): Exec {
+    return tfExec(name, cmd,
+        *args,
+        "var-file" to "config/default.tfvars",
+        "var-file" to "config/${tfEnv}.tfvars",
+        "var" to "environment_prefix=${tfEnv}"
+    )
 }
 
 tasks {
-    tfExecWithVars("tfInit", "init", "backend-config" to "config/backend.tfvars")
-    task<Exec>("tfWorkspaceNew") {
-        environment(tfExecEnv)
-        commandLine(tfBin, "workspace", "new", tfEnv, tfSrc)
-        isIgnoreExitValue = true
-        dependsOn("tfInit")
-    }
-    task<Exec>("tfWorkspaceSelect") {
-        environment(tfExecEnv)
-        commandLine(tfBin, "workspace", "select", tfEnv, tfSrc)
-        dependsOn("tfWorkspaceNew")
-    }
+    tfExec("tfInit", "init", "backend-config" to "config/backend.tfvars")
+    tfExec("tfWorkspaceNew", "workspace", "new" to "", tfEnv to "").setIgnoreExitValue(true).dependsOn("tfInit")
+    tfExec("tfWorkspaceSelect", "workspace", "select" to "", tfEnv to "").dependsOn("tfWorkspaceNew")
     tfExecWithVars("tfPlan", "plan").dependsOn("tfWorkspaceSelect")
     tfExecWithVars("tfApply", "apply", ("auto-approve" to null)).dependsOn("tfPlan")
 }
