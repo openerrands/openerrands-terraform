@@ -32,6 +32,6 @@ output "api_gateway_arn" {
   value = aws_apigatewayv2_api.http_api.arn
 }
 
-output "lambda_assume_role_arn" {
+output "lambda_role_arn" {
   value = aws_iam_role.lambda.arn
 }
