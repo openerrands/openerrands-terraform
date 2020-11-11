@@ -19,7 +19,7 @@ terraform {
 
 provider "aws" {
   assume_role {
-    role_arn     = "arn:aws:iam::${var.aws_account_id}:role/OrganizationAccountAccessRole"
+    role_arn = "arn:aws:iam::${var.aws_account_id}:role/OrganizationAccountAccessRole"
   }
 }
 
@@ -211,4 +211,20 @@ resource "cloudflare_record" "api" {
   name = aws_apigatewayv2_domain_name.http_api.domain_name
   value = aws_apigatewayv2_domain_name.http_api.domain_name_configuration[0].target_domain_name
   ttl = 60
+}
+
+
+data "aws_iam_policy_document" "lambda" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "lambda" {
+  name = "LambdaAssumeRole"
+  assume_role_policy = data.aws_iam_policy_document.lambda.json
 }

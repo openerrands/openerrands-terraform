@@ -43,7 +43,6 @@ tasks {
     task<Exec>("tfWorkspaceSelect") {
         environment(tfExecEnv)
         commandLine(tfBin, "workspace", "select", tfEnv, tfSrc)
-        isIgnoreExitValue = true
         dependsOn("tfWorkspaceNew")
     }
     tfExecWithVars("tfPlan", "plan").dependsOn("tfWorkspaceSelect")

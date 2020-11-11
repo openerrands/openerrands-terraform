@@ -1,3 +1,3 @@
 global_prefix = "openerrands"
 global_domain = "openerrands.cloud"
-region = "us-east-2"
+aws_account_id = "486736317066"
